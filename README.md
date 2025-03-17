@@ -13,6 +13,9 @@
   <img src="figs/method.png" width=90%> <br>
 </p>
 
+
+<div style="text-align: left;">
+
 ## Latest News
 - 2025/03/17: Code of **SA-Occ** is released. 🚀
 
@@ -95,12 +98,12 @@ The folder structure should be organized as follows before our processing.
 
 ```shell script
 └── Path_to_SA-Occ/
-├── data
-│   ├── nuscenes
-│   │   ├── maps
-│   │   ├── samples
-│   │   ├── sweeps
-|   |   ├── v1.0-trainval
+    └── data
+        └── nuscenes
+            ├── maps
+            ├── samples
+            ├── sweeps
+            ├── v1.0-trainval
 ```
 
 step 2. For Occupancy Prediction task, download (only) the 'gts' from [CVPR2023-3D-Occupancy-Prediction](https://github.com/CVPR2023-3D-Occupancy-Prediction/CVPR2023-3D-Occupancy-Prediction) and arrange the folder as:
@@ -212,3 +215,4 @@ Thanks for their excellent work!
 
 If this work is helpful for your research, please consider citing the following BibTeX entry.
 
+</div>
