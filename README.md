@@ -4,11 +4,18 @@
 </div>
 
 <div style="text-align: center;">
-  <img src="figs/intro.png" width="90%">
+  <img src="figs/intro.png" width="100%">
 </div>
 
+<details>
+  <summary>
+  <font size="+1">Introduce</font>
+  </summary>
+   Street views provide real-time observations but are significantly affected by occlusions from both static (blue regions occluded by the wall and door) and dynamic objects (yellow regions occluded by the vehicles). Additionally, perspective projections lead to sparse observations in distant regions. Integrating satellite imagery enhances perception, particularly in occluded areas and distant regions (orange boxes). However, a key challenge in fusing satellite and street views is the inconsistency of dynamic objects due to the temporal gap between observations (red boxes: absence of the dynamic vehicle in satellite view).
+</details>
+
 <p align="center">
-  <img src="figs/method.png" width=90%> <br>
+  <img src="figs/method.png" width=100%> <br>
 </p>
 
 ## Latest News
@@ -36,7 +43,7 @@ Existing vision-based 3D occupancy prediction methods are inherently limited in 
 |    [**M3:FlashOCC-4D-Stereo**](projects/configs/flashocc/flashocc-stbase-4d-stereo-512x1408_4x4_2e-4.py)     |   2    |  Swin-B  |      -       | 512x1408   |   43.52 | [gdrive](https://drive.google.com/file/d/1f6E6Bm6enIJETSEbfXs57M0iOUU997kU/view?usp=drive_link)  | [log](https://drive.google.com/file/d/1tch-YK4ROGDGNmDcN5FZnOAvsbHe-iSU/view?usp=drive_link)  |
 |                 [**V4: SA-OCC**](projects/configs/sa_occ/sa-occ-stbase-ur18-4d-512x1408_4x4_2e-4.py)                  |   2    |  Swin-B  |     R18      |  512x1408  |  43.90  | [gdrive](https://drive.google.com/file/d/1iP7LzoMqb7nD2kg63ss6197B-9qiynFZ/view?usp=drive_link)  | [log](https://drive.google.com/file/d/1z-Ynm_LKWgyOASAWlEGehjBPgaZ2TnN4/view?usp=drive_link)  |
 |                 [**V5: SA-OCC**](projects/configs/sa_occ/sa-occ-stbase-ur50-4d-512x1408_4x4_2e-4.py)                  |   2    |  Swin-B  |     R50      |  512x1408  |  44.29  | [gdrive](https://drive.google.com/file/d/1wnOGNadRJk9pBpM8Z0YJiad5jYlNdeOU/view?usp=drive_link)  | [log](https://drive.google.com/file/d/1oEEBipGh_T6NZz3mzXBjWYSz6WLSxA4b/view?usp=drive_link)  |
-|                 [**V5*: SA-OCC**](projects/configs/sa_occ/sa-occ-stbase-ur50-4d-512x1408_4x4_2e-4.py)                  |   2    |  Swin-B  |     R50      |  512x1408  |  44.64  | [gdrive](https://drive.google.com/file/d/1QbLxG5EOioWQqJfwIJe5hW7Yy3ABZHAu/view?usp=drive_link)  | [log](https://drive.google.com/file/d/1T4oSi9lFEG6WfiP8jFeeYSGOCFfLtGCF/view?usp=drive_link)  |
+|                 [**V5: SA-OCC***](projects/configs/sa_occ/sa-occ-stbase-ur50-4d-512x1408_4x4_2e-4.py)                  |   2    |  Swin-B  |     R50      |  512x1408  |  44.64  | [gdrive](https://drive.google.com/file/d/1QbLxG5EOioWQqJfwIJe5hW7Yy3ABZHAu/view?usp=drive_link)  | [log](https://drive.google.com/file/d/1T4oSi9lFEG6WfiP8jFeeYSGOCFfLtGCF/view?usp=drive_link)  |
 
 ## Environment Setup
 step 1. Install environment for pytorch training
