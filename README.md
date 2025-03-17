@@ -1,20 +1,15 @@
 <div align="center">
 <h1>SA-Occ</h1>
-<h3>SA-Occ: Satellite-Assisted 3D Occupancy Prediction in Real World</h3>
+<h2>SA-Occ: Satellite-Assisted 3D Occupancy Prediction in Real World</h2>
+</div>
 
 <div style="text-align: center;">
   <img src="figs/intro.png" width="90%">
-</div>
-<div style="text-align: left;">
-  Street views provide real-time observations but are significantly affected by occlusions from both static (<span style="color:blue;">blue regions occluded by the wall and door</span>) and dynamic objects (<span style="color:yellow;">yellow regions occluded by the vehicles</span>). Additionally, perspective projections lead to sparse observations in distant regions. Integrating satellite imagery enhances perception, particularly in occluded areas and distant regions (<span style="color:orange;">orange boxes</span>). However, a key challenge in fusing satellite and street views is the inconsistency of dynamic objects due to the temporal gap between observations (<span style="color:red;">red boxes: absence of the dynamic vehicle in satellite view</span>).
 </div>
 
 <p align="center">
   <img src="figs/method.png" width=90%> <br>
 </p>
-
-
-<div style="text-align: left;">
 
 ## Latest News
 - 2025/03/17: Code of **SA-Occ** is released. 🚀
@@ -214,5 +209,3 @@ Thanks for their excellent work!
 ## Bibtex
 
 If this work is helpful for your research, please consider citing the following BibTeX entry.
-
-</div>
