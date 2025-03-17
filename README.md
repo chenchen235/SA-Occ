@@ -90,7 +90,7 @@ pip install -v -e .
 
 ## Prepare dataset
 
-# step 1. Prepare nuScenes dataset 
+### step 1. Prepare nuScenes dataset 
 
 You can download nuScenes 3D detection data [HERE](https://www.nuscenes.org/download) and unzip all zip files.
 
@@ -108,7 +108,7 @@ The folder structure should be organized as follows before our processing.
             ├── v1.0-trainval
 ```
 
-# step 2. For Occupancy Prediction task, download (only) the 'gts' from [CVPR2023-3D-Occupancy-Prediction](https://github.com/CVPR2023-3D-Occupancy-Prediction/CVPR2023-3D-Occupancy-Prediction) and arrange the folder as:
+### step 2. For Occupancy Prediction task, download (only) the 'gts' from [CVPR2023-3D-Occupancy-Prediction](https://github.com/CVPR2023-3D-Occupancy-Prediction/CVPR2023-3D-Occupancy-Prediction) and arrange the folder as:
 ```shell script
 └── Path_to_SA-Occ/
     └── data
@@ -119,7 +119,7 @@ The folder structure should be organized as follows before our processing.
             ├── gts (new)
 ```
 
-# step 3. Prepare our Occ3D-NuScenes Extension Satellite Dataset
+### step 3. Prepare our Occ3D-NuScenes Extension Satellite Dataset
 
 You can download our satellite data [gdrive](https://drive.google.com/file/d/138O6L0ecocVc0t2mFsIsNaM7oMK1bhM2/view?usp=drive_link) and unzip all zip files and arrange the folder as:
 ```shell script
@@ -145,7 +145,7 @@ thus, the folder will be ranged as following:
             ├── sat (new)
 ```
 
-# step 4. Download nuScenes-lidarseg from nuScenes official site and put it under data/nuscenes/. Create depth and semantic labels from point cloudby running:
+### step 4. Download nuScenes-lidarseg from nuScenes official site and put it under data/nuscenes/. Create depth and semantic labels from point cloudby running:
 
 ```shell
 python tools/generate_point_label.py
@@ -164,7 +164,7 @@ thus, the folder will be ranged as following:
             ├── samples_point_label (new)
 ```
 
-# step 5.Create the pkl for SA-Occ by running:
+### step 5.Create the pkl for SA-Occ by running:
 
 ```shell
 python tools/create_data_bevdet.py
