@@ -1,0 +1,24 @@
+# ninja log v5
+4	14838	1740497111000000000	/workspace/FlashOCC-master/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/bev_pool/src/bev_sum_pool.o	cecda7e163886844
+5	14939	1740497111000000000	/workspace/FlashOCC-master/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/bev_pool/src/bev_max_pool.o	bd16bb535cffde72
+4	16438	1740497113000000000	/workspace/FlashOCC-master/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/bev_pool/src/bev_pooling.o	35a0bd67f41419da
+5	33241	1740497130000000000	/workspace/FlashOCC-master/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/bev_pool/src/bev_sum_pool_cuda.o	2fa8bb6287319baa
+5	33438	1740497130000000000	/workspace/FlashOCC-master/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/bev_pool/src/bev_max_pool_cuda.o	d15bcd64c6dfe8a3
+2	882	1740497132000000000	/workspace/FlashOCC-master/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/bev_pool_v2/src/bev_pool_cuda.o	96c2c9cfe01b9cda
+1	17145	1740497148000000000	/workspace/FlashOCC-master/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/bev_pool_v2/src/bev_pool.o	dc707fc59f0ffaa2
+5	1026	1740497150000000000	/workspace/FlashOCC-master/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/nearest_assign/src/nearest_assign_cuda.o	9147b4424306ba92
+5	16318	1740497165000000000	/workspace/FlashOCC-master/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/nearest_assign/src/nearest_assign.o	411b689c27a41d5b
+0	13964	1740739187463301001	/export/cc/SA-OCC/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/bev_pool/src/bev_pooling.o	f7e3b5e82414e510
+0	14658	1740739188159287068	/export/cc/SA-OCC/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/bev_pool/src/bev_sum_pool.o	b42d1dc8c26cc8c
+1	14703	1740739188203286187	/export/cc/SA-OCC/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/bev_pool/src/bev_max_pool.o	1ee5409a727aa311
+1	30020	1740739203526974456	/export/cc/SA-OCC/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/bev_pool/src/bev_max_pool_cuda.o	b2c07a50b49ce643
+1	30059	1740739203562973709	/export/cc/SA-OCC/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/bev_pool/src/bev_sum_pool_cuda.o	4f38a3fa102e6f51
+3	441	1740739204626951620	/export/cc/SA-OCC/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/bev_pool_v2/src/bev_pool_cuda.o	f07ec7dec7376c38
+3	13961	1740739218138671118	/export/cc/SA-OCC/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/bev_pool_v2/src/bev_pool.o	81a07232cd894563
+3	403	1740739219054652102	/export/cc/SA-OCC/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/nearest_assign/src/nearest_assign_cuda.o	ee3a3cca34d4a277
+3	13810	1740739232454373925	/export/cc/SA-OCC/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/nearest_assign/src/nearest_assign.o	99ea21c956f954f1
+8	13867	1740745948283525663	/export/cc/SA-OCC/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/bev_pool/src/bev_sum_pool.o	b42d1dc8c26cc8c
+8	14003	1740745948419522936	/export/cc/SA-OCC/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/bev_pool/src/bev_max_pool.o	1ee5409a727aa311
+8	16287	1740745950699477207	/export/cc/SA-OCC/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/bev_pool/src/bev_pooling.o	f7e3b5e82414e510
+8	16211	1740745967431141621	/export/cc/SA-OCC/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/bev_pool_v2/src/bev_pool.o	81a07232cd894563
+7	16039	1740745983906811170	/export/cc/SA-OCC/projects/build/temp.linux-x86_64-3.8/mmdet3d_plugin/ops/nearest_assign/src/nearest_assign.o	99ea21c956f954f1
