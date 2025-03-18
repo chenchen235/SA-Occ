@@ -27,7 +27,11 @@ Existing vision-based 3D occupancy prediction methods are inherently limited in 
 ## Demo
 
 <div style="text-align: center;">
-  <img src="figs/demo.gif" width="100%">
+  <img src="figs/demo_daytime.gif" width="100%">
+</div>
+
+<div style="text-align: center;">
+  <img src="figs/demo_nighttime.gif" width="100%">
 </div>
 
 Our SA-Occ exhibits enhanced robustness compared to the baseline, especially in nighttime conditions.
