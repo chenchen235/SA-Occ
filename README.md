@@ -26,9 +26,13 @@ Existing vision-based 3D occupancy prediction methods are inherently limited in 
 
 ## Demo
 
+#### Daytime
+
 <div style="text-align: center;">
   <img src="figs/demo_daytime.gif" width="100%">
 </div>
+
+#### Nighttime
 
 <div style="text-align: center;">
   <img src="figs/demo_nighttime.gif" width="100%">
