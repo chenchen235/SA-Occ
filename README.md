@@ -1,5 +1,4 @@
 <div align="center">
-<h1>SA-Occ</h1>
 <h2>SA-Occ: Satellite-Assisted 3D Occupancy Prediction in Real World</h2>
 </div>
 
@@ -7,7 +6,9 @@
   <img src="figs/demo.gif" width="100%">
 </div>
 
+<div style="text-align: center;">
 Our SA-Occ exhibits enhanced robustness compared to the baseline, especially in nighttime conditions.
+</div>
 
 <div style="text-align: center;">
   <img src="figs/intro.png" width="100%">
