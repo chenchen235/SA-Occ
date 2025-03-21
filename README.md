@@ -41,6 +41,7 @@ Existing vision-based 3D occupancy prediction methods are inherently limited in 
 Our SA-Occ exhibits enhanced robustness compared to the baseline, especially in nighttime conditions.
 
 ## Latest News
+- 2025/03/21: Paper of **SA-Occ** available in [arxiv](https://arxiv.org/abs/2503.16399).
 - 2025/03/17: Code of **SA-Occ** is released. 🚀
 
 ## Main Results
@@ -230,3 +231,15 @@ Thanks for their excellent work!
 ## Bibtex
 
 If this work is helpful for your research, please consider citing the following BibTeX entry.
+
+```
+@misc{chen2025saoccsatelliteassisted3doccupancy,
+      title={SA-Occ: Satellite-Assisted 3D Occupancy Prediction in Real World}, 
+      author={Chen Chen and Zhirui Wang and Taowei Sheng and Yi Jiang and Yundu Li and Peirui Cheng and Luning Zhang and Kaiqiang Chen and Yanfeng Hu and Xue Yang and Xian Sun},
+      year={2025},
+      eprint={2503.16399},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2503.16399}, 
+}
+```
