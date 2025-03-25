@@ -74,40 +74,14 @@ class SA_OCC(DualBEV):
         """
         imgs = img
         B, N, C, imH, imW = imgs.shape
-        # imgs = imgs[:,:,[2, 1, 0], :, :]
-        # imgs_sample = torch.cat((imgs[0,0,:,:,:], imgs[0,1,:,:,:], imgs[0,2,:,:,:], imgs[0,3,:,:,:], imgs[0,4,:,:,:], imgs[0,5,:,:,:]), dim=-2)
 
         imgs = imgs.view(B * N, C, imH, imW)
 
         x = self.img_backbone(imgs)
         if self.sat:
-            # print(img_sat.shape)
+
             x_sat = self.sat_img_backbone(img_sat)
-            # torch_resize = Resize([704, 704]) # 定义Resize类对象
-            # im1_resize = torch_resize(img_sat[0]) # 执行resize操作
-            # print(imgs_sample.shape, im1_resize.shape)
-            # im1_resize = torch.cat((imgs_sample, im1_resize),dim = -2)
 
-            # # print(x_sat_sample.shape)
-            # mean = torch.tensor([0.485, 0.456, 0.406])
-            # std = torch.tensor([0.229, 0.224, 0.225])
-
-            # # 反归一化
-            # x_ = im1_resize.clone()  # 克隆 Tensor 以避免修改原始数据
-            # x_[0, :, :] = x_[0, :, :] * std[0] + mean[0]  # 红色通道
-            # x_[1, :, :] = x_[1, :, :] * std[1] + mean[1]  # 绿色通道
-            # x_[2, :, :] = x_[2, :, :] * std[2] + mean[2]  # 蓝色通道
-
-            # # 调整值范围到 [0, 255]
-            # x_ = x_.clamp(0, 1)  # 限制值在 [0, 1] 范围内
-            # x_ = x_ * 255  # 缩放到 [0, 255]
-
-            # # 转换数据类型到 uint8
-            # x_ = x_.to(torch.uint8)
-
-            # merged_img = transforms.ToPILImage()(x_)
-            # merged_img.save('imgs/' + str(self.count) + '.png')
-            # self.count = self.count + 1
         else:
             x_sat = None
 

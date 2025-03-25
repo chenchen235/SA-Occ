@@ -136,7 +136,7 @@ The folder structure should be organized as follows before our processing.
 
 #### step 3. Prepare our Occ3D-NuScenes Extension Satellite Dataset
 
-You can download our satellite data [gdrive](https://drive.google.com/file/d/138O6L0ecocVc0t2mFsIsNaM7oMK1bhM2/view?usp=drive_link) and unzip all zip files and arrange the folder as:
+You can download our satellite data [gdrive](https://drive.google.com/file/d/138O6L0ecocVc0t2mFsIsNaM7oMK1bhM2/view?usp=drive_link) or [hugface](https://huggingface.co/datasets/chenchen235/SA-Occ_Occ3D-SatExt) and unzip all zip files and arrange the folder as:
 ```shell script
 └── Path_to_SA-Occ/
     └── data
