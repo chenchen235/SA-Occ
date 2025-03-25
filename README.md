@@ -134,9 +134,11 @@ The folder structure should be organized as follows before our processing.
             ├── gts (new)
 ```
 
-#### step 3. Prepare our Occ3D-NuScenes Extension Satellite Dataset
+#### step 3. Prepare our Occ3D-NuScenes Extension Satellite Dataset (SA-Occ_Occ3D-SatExt)
 
-You can download our satellite data [gdrive](https://drive.google.com/file/d/138O6L0ecocVc0t2mFsIsNaM7oMK1bhM2/view?usp=drive_link) (or [huggingface](https://huggingface.co/datasets/chenchen235/SA-Occ_Occ3D-SatExt) for more information) and unzip all zip files and arrange the folder as:
+The SA-Occ_Occ3D-SatExt dataset is an extension of the Occ3D-nuScenes dataset, integrating satellite imagery with real-time ground-level sensor data to enhance 3D occupancy prediction tasks. This dataset is the first to systematically incorporate satellite data into real-time applications using GPS and IMU for alignment, making significant contributions to the field of autonomous driving.
+
+You can download SA-Occ_Occ3D-SatExt [gdrive](https://drive.google.com/file/d/138O6L0ecocVc0t2mFsIsNaM7oMK1bhM2/view?usp=drive_link) (or [huggingface](https://huggingface.co/datasets/chenchen235/SA-Occ_Occ3D-SatExt) for more information) and unzip all zip files and arrange the folder as:
 ```shell script
 └── Path_to_SA-Occ/
     └── data
