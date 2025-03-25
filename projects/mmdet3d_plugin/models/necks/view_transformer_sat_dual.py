@@ -691,7 +691,7 @@ class DualViewTransformerFull_SAT(LSSViewTransformerBEVDepth):
         filter_depth = torch.where(depth < self.depth_threshold, torch.zeros_like(depth), depth)
 
         lss_feat, ht_feat, filter_depth = self.view_transform(input, filter_depth, tran_feat) # # B * N, out_channels=80, H, W
-        bev_feat = self.fuser(ht_feat, lss_feat)
+        bev_feat = self.fuser(lss_feat, ht_feat)
 
         dtype = input[0].dtype
         mask = torch.zeros((B, self.bev_h, self.bev_w),
