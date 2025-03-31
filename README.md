@@ -235,13 +235,10 @@ Thanks for their excellent work!
 If this work is helpful for your research, please consider citing the following BibTeX entry.
 
 ```
-@misc{chen2025saoccsatelliteassisted3doccupancy,
-      title={SA-Occ: Satellite-Assisted 3D Occupancy Prediction in Real World}, 
-      author={Chen Chen and Zhirui Wang and Taowei Sheng and Yi Jiang and Yundu Li and Peirui Cheng and Luning Zhang and Kaiqiang Chen and Yanfeng Hu and Xue Yang and Xian Sun},
-      year={2025},
-      eprint={2503.16399},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/2503.16399}, 
+@article{chen2025sa,
+  title={SA-Occ: Satellite-Assisted 3D Occupancy Prediction in Real World},
+  author={Chen, Chen and Wang, Zhirui and Sheng, Taowei and Jiang, Yi and Li, Yundu and Cheng, Peirui and Zhang, Luning and Chen, Kaiqiang and Hu, Yanfeng and Yang, Xue and others},
+  journal={arXiv preprint arXiv:2503.16399},
+  year={2025}
 }
 ```
