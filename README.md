@@ -41,7 +41,8 @@ Existing vision-based 3D occupancy prediction methods are inherently limited in 
 Our SA-Occ exhibits enhanced robustness compared to the baseline, especially in nighttime conditions.
 
 ## Latest News
-- 2025/03/21: Paper of **SA-Occ** available in [arxiv](https://arxiv.org/abs/2503.16399).
+- 2025/03/25: Our Occ3D_nuScenes_SatExt dataset and paper are also available on Hugging Face. You can access them via the following links: [dataset](https://huggingface.co/datasets/chenchen235/Occ3D_nuScenes_SatExt) and [paper](https://huggingface.co/papers/2503.16399).
+- 2025/03/21: Paper of **SA-Occ** is available in [arxiv](https://arxiv.org/abs/2503.16399).
 - 2025/03/17: Code of **SA-Occ** is released. 🚀
 
 ## Main Results
@@ -134,11 +135,11 @@ The folder structure should be organized as follows before our processing.
             ├── gts (new)
 ```
 
-#### step 3. Prepare our Occ3D-NuScenes Extension Satellite Dataset (SA-Occ_Occ3D-SatExt)
+#### step 3. Prepare our Occ3D-NuScenes Extension Satellite Dataset (Occ3D-NuScenes-SatExt)
 
-The SA-Occ_Occ3D-SatExt dataset is an extension of the Occ3D-nuScenes dataset, integrating satellite imagery with real-time ground-level sensor data to enhance 3D occupancy prediction tasks. This dataset is the first to systematically incorporate satellite data into real-time applications using GPS and IMU for alignment, making significant contributions to the field of autonomous driving.
+The Occ3D-NuScenes-SatExt dataset is an extension of the Occ3D-nuScenes dataset, integrating satellite imagery with real-time ground-level sensor data to enhance 3D occupancy prediction tasks. This dataset is the first to systematically incorporate satellite data into real-time applications using GPS and IMU for alignment, making significant contributions to the field of autonomous driving.
 
-You can download SA-Occ_Occ3D-SatExt [gdrive](https://drive.google.com/file/d/138O6L0ecocVc0t2mFsIsNaM7oMK1bhM2/view?usp=drive_link) (or [huggingface](https://huggingface.co/datasets/chenchen235/SA-Occ_Occ3D-SatExt) for more information) and unzip all zip files and arrange the folder as:
+You can download Occ3D-NuScenes-SatExt [gdrive](https://drive.google.com/file/d/138O6L0ecocVc0t2mFsIsNaM7oMK1bhM2/view?usp=drive_link) (or [huggingface](https://huggingface.co/datasets/chenchen235/Occ3D_nuScenes_SatExt) for more information) and unzip all zip files and arrange the folder as:
 ```shell script
 └── Path_to_SA-Occ/
     └── data
