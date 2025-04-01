@@ -41,7 +41,7 @@ Existing vision-based 3D occupancy prediction methods are inherently limited in 
 Our SA-Occ exhibits enhanced robustness compared to the baseline, especially in nighttime conditions.
 
 ## Latest News
-- 2025/03/25: Our **Occ3D_nuScenes_SatExt** dataset and paper are also available on Hugging Face. You can access them via the following links: [dataset](https://huggingface.co/datasets/chenchen235/Occ3D_nuScenes_SatExt) and [paper](https://huggingface.co/papers/2503.16399).
+- 2025/03/25: Our paper and **Occ3D_nuScenes_SatExt** dataset are also available on Hugging Face ([dataset](https://huggingface.co/datasets/chenchen235/Occ3D_nuScenes_SatExt) and [paper](https://huggingface.co/papers/2503.16399)).
 - 2025/03/21: Paper of **SA-Occ** is available in [arxiv](https://arxiv.org/abs/2503.16399).
 - 2025/03/17: Code of **SA-Occ** is released. 🚀
 
