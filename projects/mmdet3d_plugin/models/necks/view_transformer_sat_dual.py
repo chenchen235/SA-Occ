@@ -273,7 +273,7 @@ class DualViewTransformerFull_SAT(LSSViewTransformerBEVDepth):
         self.depth_net = DepthNet(self.in_channels, self.in_channels,
                             self.out_channels, self.D+2, **depthnet_cfg)
         self.fuser = DualFeatFusion(2*self.out_channels,self.out_channels)
-        self.dy_att = BEVGeomAttention()
+        self.geom_att = BEVGeomAttention()
         self.prob = ProbNet(in_channels=self.out_channels, loss_weight=0.2, with_centerness=True, bev_size=(self.bev_h,self.bev_w))
         self.positional_encoding = LearnedPositionalEncoding(self.out_channels // 2, self.bev_h, self.bev_w)
         self.down = nn.Conv2d(self.out_channels*2, self.out_channels, kernel_size=3, padding=1)
@@ -691,7 +691,7 @@ class DualViewTransformerFull_SAT(LSSViewTransformerBEVDepth):
         filter_depth = torch.where(depth < self.depth_threshold, torch.zeros_like(depth), depth)
 
         lss_feat, ht_feat, filter_depth = self.view_transform(input, filter_depth, tran_feat) # # B * N, out_channels=80, H, W
-        bev_feat = self.fuser(lss_feat, ht_feat)
+        bev_feat = self.fuser(ht_feat, lss_feat)
 
         dtype = input[0].dtype
         mask = torch.zeros((B, self.bev_h, self.bev_w),
@@ -702,7 +702,7 @@ class DualViewTransformerFull_SAT(LSSViewTransformerBEVDepth):
         bev_mask_prob = torch.sigmoid(bev_mask_logit)
 
         bev_feat = self.down(torch.cat((bev_feat, sat_feat * (1 - bev_mask_prob)), dim = 1)) 
-        bev_feat = self.dy_att(bev_feat, bev_mask_logit) * bev_feat
+        bev_feat = self.geom_att(bev_feat, bev_mask_logit) * bev_feat
 
         return bev_feat, depth, bev_mask_logit, semantic, sat_sem, sat_depth
 
