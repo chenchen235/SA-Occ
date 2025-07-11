@@ -44,6 +44,7 @@ Our SA-Occ exhibits enhanced robustness compared to the baseline, especially in 
 - 2025/03/25: Paper and **Occ3D_nuScenes_SatExt** dataset are also available on Hugging Face ([dataset](https://huggingface.co/datasets/chenchen235/Occ3D_nuScenes_SatExt) / [paper](https://huggingface.co/papers/2503.16399)).
 - 2025/03/21: Paper of **SA-Occ** is available in [arxiv](https://arxiv.org/abs/2503.16399).
 - 2025/03/17: Code and **Occ3D_nuScenes_SatExt** dataset of **SA-Occ** are released. 🚀
+- 2025/06/26: Paper of **SA-Occ** is accepted by ICCV 2025! 
 
 ## Main Results
 
