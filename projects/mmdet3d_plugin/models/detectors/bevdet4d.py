@@ -383,5 +383,3 @@ class BEVDet4D(BEVDet):
         bev_feat = torch.cat(bev_feat_list, dim=1)      # (B, N_frames*C, Dy, Dx)
         x = self.bev_encoder(bev_feat)
         return [x], depth_list[0]
-
-

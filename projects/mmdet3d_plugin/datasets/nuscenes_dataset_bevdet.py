@@ -236,7 +236,12 @@ class NuScenesDatasetBEVDet(Custom3DDataset):
             pts_filename=info['lidar_path'],
             sweeps=info['sweeps'],
             timestamp=info['timestamp'] / 1e6,
+            curr=info,
+            virtual_front_cam_token=info.get('virtual_front_cam_token', info['token']),  # 兜底使用 token
+            scene_token=info.get('scene_token', ''),
+            # front_cam_token=info['front_cam_token']
         )
+
         if 'ann_infos' in info:
             input_dict['ann_infos'] = info['ann_infos']
         if self.modality['use_camera']:

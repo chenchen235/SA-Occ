@@ -256,5 +256,3 @@ class Metric_FScore():
     def count_fscore(self,):
         base_color, attrs = 'red', ['bold', 'dark']
         print(pcolor('\n######## F score: {} #######'.format(self.tot_f1_mean / self.cnt), base_color, attrs=attrs))
-
-

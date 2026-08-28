@@ -8,15 +8,34 @@ from mmdet3d.models import CenterPoint
 from mmdet3d.models import builder
 
 
+def inverse_rigid_transform(transform):
+    """Invert homogeneous rigid transforms without a cuSolver call.
+
+    For T=[R,t;0,1], T^-1=[R^T,-R^Tt;0,1]. This avoids the legacy
+    implementation's CPU round trip and is algebraically equivalent for the
+    camera/ego poses used here.
+    """
+    rotation_t = transform[..., :3, :3].transpose(-1, -2)
+    translation = -rotation_t.matmul(transform[..., :3, 3:4])
+    result = torch.zeros_like(transform)
+    result[..., :3, :3] = rotation_t
+    result[..., :3, 3:4] = translation
+    result[..., 3, 3] = 1
+    return result
+
+
 @DETECTORS.register_module()
 class BEVDet(CenterPoint):
-    def __init__(self, img_backbone, img_neck, img_view_transformer, img_bev_encoder_backbone, img_bev_encoder_neck,
+    def __init__(self, img_backbone=None, img_neck=None, img_view_transformer=None, img_bev_encoder_backbone=None, img_bev_encoder_neck=None,
                  pts_bbox_head=None, **kwargs):
         super(BEVDet, self).__init__(img_backbone=img_backbone, img_neck=img_neck, pts_bbox_head=pts_bbox_head,
                                      **kwargs)
-        self.img_view_transformer = builder.build_neck(img_view_transformer)
-        self.img_bev_encoder_backbone = builder.build_backbone(img_bev_encoder_backbone)
-        self.img_bev_encoder_neck = builder.build_neck(img_bev_encoder_neck)
+        if img_view_transformer is not None:
+            self.img_view_transformer = builder.build_neck(img_view_transformer)
+        if img_bev_encoder_backbone is not None:
+            self.img_bev_encoder_backbone = builder.build_backbone(img_bev_encoder_backbone)
+        if img_bev_encoder_neck is not None:
+            self.img_bev_encoder_neck = builder.build_neck(img_bev_encoder_neck)
 
     def image_encoder(self, img, stereo=False):
         """
@@ -69,7 +88,7 @@ class BEVDet(CenterPoint):
 
         # calculate the transformation from adj sensor to key ego
         keyego2global = ego2globals[:, 0,  ...].unsqueeze(1)    # (B, 1, 4, 4)
-        global2keyego = torch.inverse(keyego2global.double())   # (B, 1, 4, 4)
+        global2keyego = inverse_rigid_transform(keyego2global.double())
         sensor2keyegos = \
             global2keyego @ ego2globals.double() @ sensor2egos.double()     # (B, N_views, 4, 4)
         sensor2keyegos = sensor2keyegos.float()
@@ -105,7 +124,7 @@ class BEVDet(CenterPoint):
         points (list[torch.Tensor], optional): Points of each sample.
                 Defaults to None.
         img_inputs:
-                imgs:  (B, N_views, 3, H, W)        
+                imgs:  (B, N_views, 3, H, W)
                 sensor2egos: (B, N_views, 4, 4)
                 ego2globals: (B, N_views, 4, 4)
                 intrins:     (B, N_views, 3, 3)
@@ -189,19 +208,34 @@ class BEVDet(CenterPoint):
                 raise TypeError('{} must be a list, but got {}'.format(
                     name, type(var)))
 
-        num_augs = len(img_inputs)
-        if num_augs != len(img_metas):
-            raise ValueError(
-                'num of augmentations ({}) != num of image meta ({})'.format(
-                    len(img_inputs), len(img_metas)))
-
-        if not isinstance(img_inputs[0][0], list):
-            img_inputs = [img_inputs] if img_inputs is None else img_inputs
-            points = [points] if points is None else points
-            return self.simple_test(points[0], img_metas[0], img_inputs[0],
-                                    **kwargs)
+        if len(img_inputs) in [7, 8] and torch.is_tensor(img_inputs[0]):
+            # 单次推理格式：包装成 TTA 格式
+            img_inputs = [img_inputs]
+            img_metas = [img_metas]
+            points = [points] if points is not None else [None]  # ✅ 处理 None
         else:
-            return self.aug_test(None, img_metas[0], img_inputs[0], **kwargs)
+            # TTA 格式或其他格式
+            if points is not None and not isinstance(points, list):
+                points = [points]
+            elif points is None:
+                points = [None]
+        # 现在格式统一为: img_inputs = [[imgs, sensor2egos, ...]]
+        return self.simple_test(points[0], img_metas[0], img_inputs[0], **kwargs)
+
+        # num_augs = len(img_inputs)
+        # # print(len(img_inputs), len(img_metas))
+        # if num_augs != len(img_metas):
+        #     raise ValueError(
+        #         'num of augmentations ({}) != num of image meta ({})'.format(
+        #             len(img_inputs), len(img_metas)))
+
+        # if not isinstance(img_inputs[0][0], list):
+        #     img_inputs = [img_inputs] if img_inputs is None else img_inputs
+        #     points = [points] if points is None else points
+        #     return self.simple_test(points[0], img_metas[0], img_inputs[0],
+        #                             **kwargs)
+        # else:
+        #     return self.aug_test(None, img_metas[0], img_inputs[0], **kwargs)
 
     def aug_test(self, points, img_metas, img=None, rescale=False):
         """Test function without augmentaiton."""

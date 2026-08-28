@@ -37,16 +37,16 @@ class EgoPoseDataset(Dataset):
 
     def get_ego_from_lidar(self, info):
         ego_from_lidar = trans_matrix(
-            np.array(info['lidar2ego_translation']), 
+            np.array(info['lidar2ego_translation']),
             Quaternion(info['lidar2ego_rotation']))
         return ego_from_lidar
 
     def get_global_pose(self, info, inverse=False):
         global_from_ego = trans_matrix(
-            np.array(info['ego2global_translation']), 
+            np.array(info['ego2global_translation']),
             Quaternion(info['ego2global_rotation']))
         ego_from_lidar = trans_matrix(
-            np.array(info['lidar2ego_translation']), 
+            np.array(info['lidar2ego_translation']),
             Quaternion(info['lidar2ego_rotation']))
         pose = global_from_ego.dot(ego_from_lidar)
         if inverse:
@@ -83,7 +83,7 @@ class EgoPoseDataset(Dataset):
             # origin
             if np.abs(origin_tf[0]) < 39 and np.abs(origin_tf[1]) < 39:
                 output_origin_list.append(origin_tf)
-        
+
         # select 8 origins
         if len(output_origin_list) > 8:
             select_idx = np.round(np.linspace(0, len(output_origin_list) - 1, 8)).astype(np.int64)

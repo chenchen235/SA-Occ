@@ -44,14 +44,15 @@ def make_cuda_ext(name,
 
 if __name__ == '__main__':
     setup(
-        name='flashocc_plugin',
-        description=("OpenMMLab's next-generation platform"
-                     'for general 3D object detection.'),
+        name='saocc-plus-plugin',
+        version='0.1.0',
+        description='SA-Occ+ satellite-assisted 3D occupancy plugin.',
         long_description_content_type='text/markdown',
-        author='MMDetection3D Contributors',
-        author_email='zwwdev@gmail.com',
-        keywords='computer vision, 3D object detection',
-        url='https://github.com/open-mmlab/mmdetection3d',
+        author='SA-Occ contributors',
+        keywords='computer vision, 3D occupancy, satellite perception',
+        url='https://github.com/chenchen235/SA-Occ',
+        packages=find_packages(),
+        python_requires='>=3.8,<3.9',
         classifiers=[
             'Development Status :: 4 - Beta',
             'License :: OSI Approved :: Apache Software License',
@@ -63,30 +64,11 @@ if __name__ == '__main__':
         license='Apache License 2.0',
         ext_modules=[
             make_cuda_ext(
-                name="bev_pool_ext",
-                module="mmdet3d_plugin.ops.bev_pool",
-                sources=[
-                    "src/bev_pooling.cpp",
-                    "src/bev_sum_pool.cpp",
-                    "src/bev_sum_pool_cuda.cu",
-                    "src/bev_max_pool.cpp",
-                    "src/bev_max_pool_cuda.cu",
-                ],
-            ),
-            make_cuda_ext(
                 name="bev_pool_v2_ext",
                 module="mmdet3d_plugin.ops.bev_pool_v2",
                 sources=[
                     "src/bev_pool.cpp",
                     "src/bev_pool_cuda.cu"
-                ],
-            ),
-            make_cuda_ext(
-                name="nearest_assign_ext",
-                module="mmdet3d_plugin.ops.nearest_assign",
-                sources=[
-                    "src/nearest_assign.cpp",
-                    "src/nearest_assign_cuda.cu"
                 ],
             ),
         ],

@@ -1,8 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
-import os
-os.environ['CUDA_VISIBLE_DEVICES']='1'
-
 import warnings
 
 import mmcv

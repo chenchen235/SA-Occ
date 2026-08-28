@@ -28,7 +28,7 @@ from .bevdet4d import BEVDet4D
 
 @DETECTORS.register_module()
 class DualBEV(BEVDet):
-    
+
     def extract_img_feat(self, img, img_metas, **kwargs):
         """Extract features of images."""
         sensor2egos, ego2globals, intrins, post_rots, post_trans, bda = img[1:7]
@@ -154,7 +154,7 @@ class DualBEV4D(DualBEV, BEVDet4D):
         inputs_curr = (imgs, sensor2keyegos_curr[0:1, ...],
                        ego2globals_curr[0:1, ...], intrins, post_rots,
                        post_trans, bda[0:1, ...], mlp_input)
-                       
+
         bev_feat, depth, bev_mask = self.prepare_bev_feat(*inputs_curr)
         bev_feat_list.append(bev_feat)
 

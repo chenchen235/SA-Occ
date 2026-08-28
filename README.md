@@ -1,5 +1,5 @@
 <div align="center">
-<h1>SA-Occ: Satellite-Assisted 3D Occupancy Prediction in Real World</h1>
+<h1>SA-Occ+: Satellite-Assisted 3D Occupancy Prediction in Real World</h1>
 </div>
 
 <div style="text-align: center;">
@@ -14,8 +14,19 @@
 </details>
 
 <p align="center">
-  <img src="figs/method.png" width=100%> <br>
+  <img src="figs/method.png" width="100%">
 </p>
+
+## SA-Occ+ update
+
+This branch keeps the official SA-Occ implementation as its base and adds the
+satellite-assisted R50 auxiliary configuration with the updated satellite
+backbone, satellite path construction, dynamic-mask evaluation, and dual-view
+fusion path. The reproducible entry point is
+[`projects/configs/sa_occ/sa-occ-r50-aux.py`](projects/configs/sa_occ/sa-occ-r50-aux.py).
+
+The original SA-Occ checkpoint and the Occ3D-nuScenes-SatExt data are external
+artifacts; they are intentionally not stored in this repository.
 
 <details>
   <summary>
@@ -26,7 +37,7 @@ Existing vision-based 3D occupancy prediction methods are inherently limited in 
 
 ## Demo
 
-#### Daytime
+#### Daytime / normal conditions
 
 <div style="text-align: center;">
   <img src="figs/demo_daytime.gif" width="100%">
@@ -39,6 +50,11 @@ Existing vision-based 3D occupancy prediction methods are inherently limited in 
 </div>
 
 Our SA-Occ exhibits enhanced robustness compared to the baseline, especially in nighttime conditions.
+
+The GIFs above are qualitative demonstrations from continuous validation
+sequences. Weather-specific clips should be generated from the corresponding
+continuous validation scene before publication; no synthetic rain sequence is
+included here.
 
 ## Latest News
 - 2025/06/26: Paper of **SA-Occ** is accepted by ICCV 2025! 
@@ -218,6 +234,26 @@ python tools/test.py $config $checkpoint --eval mAP
 # multiple gpu
 ./tools/dist_test.sh $config $checkpoint num_gpu --eval mAP
 ```
+
+For the SA-Occ+ update, use the satellite-enabled configuration explicitly:
+
+```shell
+config=projects/configs/sa_occ/sa-occ-r50-aux.py
+python tools/test.py "$config" /path/to/saocc-plus.pth --eval mAP
+```
+
+The checkpoint must match this configuration, including the updated
+`ResNetUNet18` satellite backbone and `DualViewTransformerFull_SAT` neck.
+
+Before committing, run the repository self-check:
+
+```shell
+./tools/release_preflight.sh
+```
+
+The same dependency-free checks run automatically in GitHub Actions on pushes
+and pull requests. A full GPU validation still requires the pinned CUDA,
+PyTorch, MMCV, MMDetection, and MMDetection3D environment described above.
 
 ## Acknowledgement
 

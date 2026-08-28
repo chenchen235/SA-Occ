@@ -1,0 +1,17 @@
+name: SA-Occ+ release checks
+
+on:
+  push:
+    branches: [main, saocc-plus-update]
+  pull_request:
+
+jobs:
+  static-release-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+      - name: Run release preflight
+        run: ./tools/release_preflight.sh

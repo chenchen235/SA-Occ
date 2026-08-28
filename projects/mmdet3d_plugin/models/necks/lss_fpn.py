@@ -118,7 +118,3 @@ class LSSFPN3D(nn.Module):
         else:
             x = self.conv(x)    # (B, C, Dz, Dy, Dx)
         return x
-
-
-
-

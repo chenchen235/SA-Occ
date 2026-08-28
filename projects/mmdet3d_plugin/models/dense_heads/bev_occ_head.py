@@ -151,8 +151,9 @@ class BEVOCCHead3D(BaseModule):
         Returns:
             List[(Dx, Dy, Dz), (Dx, Dy, Dz), ...]
         """
-        occ_score = occ_pred.softmax(-1)    # (B, Dx, Dy, Dz, C)
-        occ_res = occ_score.argmax(-1)      # (B, Dx, Dy, Dz)
+        # softmax is strictly order preserving and therefore unnecessary
+        # before argmax during inference.
+        occ_res = occ_pred.argmax(-1)      # (B, Dx, Dy, Dz)
         occ_res = occ_res.cpu().numpy().astype(np.uint8)     # (B, Dx, Dy, Dz)
         return list(occ_res)
 
@@ -399,6 +400,5 @@ class BEVOCCHead2D_V2(BaseModule):      # Use stronger loss setting
         Returns:
             List[(Dx, Dy, Dz), (Dx, Dy, Dz), ...]
         """
-        occ_score = occ_pred.softmax(-1)    # (B, Dx, Dy, Dz, C)
-        occ_res = occ_score.argmax(-1).int()      # (B, Dx, Dy, Dz)
+        occ_res = occ_pred.argmax(-1).int()      # (B, Dx, Dy, Dz)
         return list(occ_res)

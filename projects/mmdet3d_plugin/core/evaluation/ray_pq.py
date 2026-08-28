@@ -3,7 +3,7 @@ from prettytable import PrettyTable
 
 
 class Metric_RayPQ:
-    def __init__(self, 
+    def __init__(self,
                  num_classes=18,
                  thresholds=[1, 2, 4]):
         """
@@ -19,28 +19,28 @@ class Metric_RayPQ:
             ]
         else:
             raise ValueError
-        
+
         self.num_classes = num_classes
         self.id_offset = 2 ** 16
         self.eps = 1e-5
         self.thresholds = thresholds
-        
+
         self.min_num_points = 10
         self.include = np.array(
             [n for n in range(self.num_classes - 1)],
             dtype=int)
         self.cnt = 0
-        
+
         # panoptic stuff
         self.pan_tp = np.zeros([len(self.thresholds), num_classes], dtype=int)
         self.pan_iou = np.zeros([len(self.thresholds), num_classes], dtype=np.double)
         self.pan_fp = np.zeros([len(self.thresholds), num_classes], dtype=int)
         self.pan_fn = np.zeros([len(self.thresholds), num_classes], dtype=int)
-        
+
     def add_batch(self,semantics_pred,semantics_gt,instances_pred,instances_gt, l1_error):
         self.cnt += 1
-        self.add_panoptic_sample(semantics_pred, semantics_gt, instances_pred, instances_gt, l1_error) 
-    
+        self.add_panoptic_sample(semantics_pred, semantics_gt, instances_pred, instances_gt, l1_error)
+
     def add_panoptic_sample(self, semantics_pred, semantics_gt, instances_pred, instances_gt, l1_error):
         """Add one sample of panoptic predictions and ground truths for
         evaluation.
@@ -83,13 +83,13 @@ class Metric_RayPQ:
                 final_instances[semantics_gt == class_id] = instance_count
                 instance_count += 1
                 final_instance_class_ids.append(class_id)
-                
+
         instances_gt = final_instances
-        
+
         # avoid zero (ignored label)
         instances_pred = instances_pred + 1
         instances_gt = instances_gt + 1
-        
+
         for j, threshold in enumerate(self.thresholds):
             tp_dist_mask = l1_error < threshold
             # for each class (except the ignored ones)
@@ -155,7 +155,7 @@ class Metric_RayPQ:
                     self.pan_fp[j][cl] += np.sum(
                         np.logical_and(counts_pred >= self.min_num_points,
                                     ~matched_pred))
-    
+
     def count_pq(self):
         sq_all = self.pan_iou.astype(np.double) / np.maximum(
             self.pan_tp.astype(np.double), self.eps)
@@ -163,7 +163,7 @@ class Metric_RayPQ:
             self.pan_tp.astype(np.double) + 0.5 * self.pan_fp.astype(np.double)
             + 0.5 * self.pan_fn.astype(np.double), self.eps)
         pq_all = sq_all * rq_all
-        
+
         # mask classes not occurring in dataset
         mask = (self.pan_tp + self.pan_fp + self.pan_fn) > 0
         pq_all[~mask] = float('nan')
@@ -181,7 +181,7 @@ class Metric_RayPQ:
                 self.class_names[i],
                 pq_all[0][i], pq_all[1][i], pq_all[2][i],
             ], divider=(i == len(self.class_names) - 2))
-        
+
         table.add_row([
             'MEAN',
             np.nanmean(pq_all[0]), np.nanmean(pq_all[1]), np.nanmean(pq_all[2])

@@ -1,0 +1,19 @@
+# Python runtime caches and native build artefacts must be rebuilt locally.
+__pycache__/
+*.py[cod]
+*.so
+*.o
+*.a
+*.ninja
+*.ninja_deps
+*.ninja_log
+build/
+*.egg-info/
+figs/*.pdf
+
+# Checkpoints, data and evaluation outputs are external release assets.
+*.pth
+*.pt
+*.ckpt
+work_dirs/
+data/

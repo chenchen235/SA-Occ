@@ -1,5 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import hashlib
 import os
+import random
 
 import mmcv
 import numpy as np
@@ -18,11 +20,19 @@ def mmlabNormalize(img):
     from mmcv.image.photometric import imnormalize
     mean = np.array([123.675, 116.28, 103.53], dtype=np.float32)
     std = np.array([58.395, 57.12, 57.375], dtype=np.float32)
-    to_rgb = True
+    to_rgb = False # ← 修复：PIL 已经是 RGB，不需要转换
     img = imnormalize(np.array(img), mean, std, to_rgb)
     img = torch.tensor(img).float().permute(2, 0, 1).contiguous()
     return img
 
+def mmlabNormalize_sat(img):
+    from mmcv.image.photometric import imnormalize
+    mean = np.array([123.675, 116.28, 103.53], dtype=np.float32)
+    std = np.array([58.395, 57.12, 57.375], dtype=np.float32)
+    to_rgb = True # ← 修复：PIL 已经是 RGB，不需要转换
+    img = imnormalize(np.array(img), mean, std, to_rgb)
+    img = torch.tensor(img).float().permute(2, 0, 1).contiguous()
+    return img
 
 @PIPELINES.register_module()
 class PrepareImageInputs(object):
@@ -36,7 +46,7 @@ class PrepareImageInputs(object):
         self.is_train = is_train
         self.data_config = data_config
         self.normalize_img = mmlabNormalize
-        self.sequential = sequential       
+        self.sequential = sequential
         self.load_point_label = load_point_label
 
     def point_label_transform(self, point_label, resize, resize_dims, crop, flip, rotate):
@@ -243,7 +253,7 @@ class PrepareImageInputs(object):
         # print(results['sat_path'])
         # if self.sat:
         #     sat_path = results['sat_path'] + '/sat.png'
-            
+
         #     # for sat_path in results['sat_path']:/
         #     img_sat = Image.open(sat_path)
         #     # img_sat = self.img_transform_core(
@@ -283,7 +293,7 @@ class PrepareImageInputs(object):
                                    crop=crop,
                                    flip=flip,
                                    rotate=rotate)
-            
+
             if self.load_point_label:
                 point_filename = filename.replace('samples/', 'samples_point_label/'
                                                   ).replace('.jpg','.npy')
@@ -318,7 +328,7 @@ class PrepareImageInputs(object):
                         flip=flip,
                         rotate=rotate)
                     imgs.append(self.normalize_img(img_adjacent))
-            
+
 
 
             intrins.append(intrin)      # 相机内参 (3, 3)
@@ -340,7 +350,7 @@ class PrepareImageInputs(object):
                         self.get_sensor_transforms(adj_info, cam_name)
                     sensor2egos.append(sensor2ego)
                     ego2globals.append(ego2global)
-            
+
 
         imgs = torch.stack(imgs)    # (N_views, 3, H, W)        # N_views = 6 * (N_history + 1)
 
@@ -454,8 +464,6 @@ class LoadAnnotationsBEVDepth(object):
         imgs, sensor2egos, ego2globals, intrins = results['img_inputs'][:4]
         # if self.sat:
         #     post_rots, post_trans, imgs_sat = results['img_inputs'][4:]
-        #     results['img_inputs'] = (imgs, sensor2egos, ego2globals, intrins, post_rots,
-        #                         post_trans, bda_rot, imgs_sat)
         # else:
         post_rots, post_trans = results['img_inputs'][4:6]
         results['img_inputs'] = (imgs, sensor2egos, ego2globals, intrins, post_rots,
@@ -484,7 +492,7 @@ class PointToMultiViewDepth(object):
     def __init__(self, grid_config, downsample=1):
         self.downsample = downsample
         self.grid_config = grid_config
-        
+
         # self.sat = if_sat
 
     def points2depthmap(self, points, height, width):
@@ -619,54 +627,182 @@ class LoadOccGTFromFile(object):
 
 @PIPELINES.register_module()
 class PrepareSATImageInputs(object):
-    def __init__(self, is_train=False, sequential=False):
-        # self.degrees = degrees
-        # self.translate = translate
+    """卫星图像加载（表6/7/9 增强版，路径逻辑保持原始行为）。
+
+    在原始版本基础上新增：
+    - sat_mode: normal / random_same_scene / zero（表6 先验特异性）
+    - jitter_tx/jitter_ty/jitter_yaw: 定位扰动（表7 鲁棒性）
+    - sat_cache_dir: 离线特征缓存模式（表9）
+    路径构建保持原始逻辑：/sat/ -> /{sat_dir}/ + '/sat.png'
+    """
+    def __init__(self, is_train=False, sequential=False,
+                 sat_dirs=None,
+                 test_sat_dir='sat_test',
+                 color_jitter_prob=0.2,
+                 color_jitter_strength=0.2,
+                 sat_mode='normal',
+                 random_seed=2025,
+                 jitter_tx=0.0,
+                 jitter_ty=0.0,
+                 jitter_yaw=0.0,
+                 jitter_random=False,
+                 jitter_seed=2025,
+                 sat_cache_dir=None):
         self.is_train = is_train
         self.sequential = sequential
-    
+        self.sat_dirs = sat_dirs if sat_dirs is not None else ['sat_test']
+        self.test_sat_dir = test_sat_dir
+        self.sat_cache_dir = sat_cache_dir  # 表9：离线特征缓存模式
+        # 表7：训练时方向随机（幅度=配置值，方向均匀采样），测试时固定
+        self.jitter_random = jitter_random
+        self.color_jitter_prob = color_jitter_prob
+        # 在原图归一化前做颜色抖动，保证全局一致性
+        self.color_jitter = transforms.ColorJitter(
+            brightness=color_jitter_strength,
+            contrast=color_jitter_strength,
+            saturation=color_jitter_strength,
+            hue=color_jitter_strength * 0.1
+        )
+        # 表6：卫星输入模式
+        assert sat_mode in ('normal', 'random_same_scene', 'zero'), \
+            f'unknown sat_mode: {sat_mode}'
+        self.sat_mode = sat_mode
+        self.random_seed = random_seed
+        # 表7：定位扰动参数（米/度）
+        self.jitter_tx = jitter_tx
+        self.jitter_ty = jitter_ty
+        self.jitter_yaw = jitter_yaw
+        self.jitter_seed = jitter_seed
+        # 同场景随机替换缓存：scene_dir -> [token,...]；token -> 替换token
+        self._scene_tokens_cache = {}
+        self._replace_map = {}
+
+    def _random_same_scene_path(self, sat_path):
+        """同场景内随机替换另一帧的卫星图（表6）。
+        固定种子 + token md5 作为 rng 种子，与样本处理顺序/进程数无关，跨运行可复现。
+        """
+        scene_dir = os.path.dirname(sat_path)
+        token = os.path.basename(sat_path)
+        if scene_dir not in self._scene_tokens_cache:
+            tokens = sorted(
+                t for t in os.listdir(scene_dir)
+                if os.path.isdir(os.path.join(scene_dir, t)))
+            self._scene_tokens_cache[scene_dir] = tokens
+        tokens = self._scene_tokens_cache[scene_dir]
+        if len(tokens) < 2:
+            return sat_path
+        if token not in self._replace_map:
+            candidates = [t for t in tokens if t != token]
+            h = int(hashlib.md5(token.encode()).hexdigest(), 16)
+            rng = random.Random((h ^ self.random_seed) & 0xFFFFFFFF)
+            self._replace_map[token] = rng.choice(candidates)
+        return os.path.join(scene_dir, self._replace_map[token])
+
+    def _apply_jitter(self, img, sample_key=None):
+        """定位扰动（表7）：平移（米→像素，0.2m/px）+ yaw 旋转（度）。
+        归一化前对 PIL 图像施加。
+        - jitter_random=False：tx/ty/yaw 取配置固定值
+        - 训练且 jitter_random=True：每次在 ±配置值内均匀随机
+        - 测试且 jitter_random=True：按 sample_key + jitter_seed 确定性均匀采样，
+          与样本处理顺序/worker 数无关，并保证不同模型使用同一组扰动
+        """
+        if self.jitter_tx == 0.0 and self.jitter_ty == 0.0 and self.jitter_yaw == 0.0:
+            return img
+        if self.jitter_random:
+            if self.is_train:
+                rng = random
+            else:
+                assert sample_key is not None, '测试期随机扰动需要稳定的 sample_key'
+                digest = hashlib.md5(
+                    ('%s:%s' % (self.jitter_seed, sample_key)).encode()
+                ).hexdigest()
+                rng = random.Random(int(digest[:16], 16))
+            tx = rng.uniform(-self.jitter_tx, self.jitter_tx)
+            ty = rng.uniform(-self.jitter_ty, self.jitter_ty)
+            yaw = rng.uniform(-self.jitter_yaw, self.jitter_yaw)
+        else:
+            tx, ty, yaw = self.jitter_tx, self.jitter_ty, self.jitter_yaw
+        from torchvision.transforms.functional import affine
+        px_per_m = 1.0 / 0.2
+        tx_px = tx * px_per_m
+        ty_px = ty * px_per_m
+        return affine(
+            img,
+            angle=-yaw,              # 逆时针为正（图像坐标系）
+            translate=(tx_px, ty_px),
+            scale=1.0,
+            shear=0,
+            interpolation=Image.BILINEAR,
+        )
+
+    def _load_sat(self, sat_path_dir, jitter_fn):
+        """加载卫星图 → 可选颜色抖动/定位扰动 → 归一化。
+        支持 sat_mode: normal / random_same_scene / zero（表6）。
+        """
+        if self.sat_mode == 'zero':
+            # 全零卫星输入：跳过文件读取（表6）
+            return torch.zeros(3, 400, 400)
+        if self.sat_mode == 'random_same_scene':
+            sat_path_dir = self._random_same_scene_path(sat_path_dir)
+        img_pil = Image.open(sat_path_dir + '/sat.png')
+        if jitter_fn is not None:
+            img_pil = jitter_fn(img_pil)   # 归一化前做颜色抖动
+        img_pil = self._apply_jitter(img_pil, sample_key=sat_path_dir)
+        return mmlabNormalize_sat(img_pil)
+
+    def _pick_sat_dir(self):
+        if self.is_train and len(self.sat_dirs) > 1:
+            return np.random.choice(self.sat_dirs)
+        return self.test_sat_dir  # 测试时固定用 sat_test
+
+    def _build_sat_path(self, sat_path_raw, sat_dir):
+        """保持原始路径逻辑：/sat/ -> /{sat_dir}/ + '/sat.png'"""
+        return sat_path_raw.rstrip('/').replace('/sat/', f'/{sat_dir}/') + '/sat.png'
+
     def __call__(self, results):
-        imgs = []
-        sat_path = results['sat_path'] + '/sat.png'
-        
-        img_sat = Image.open(sat_path)
-        img_sat = img_sat.rotate(-90, expand=False)
-        # if self.is_train:
-            # transform = transforms.RandomAffine(degrees=self.degrees, translate=(self.translate, self.translate))
-            # img_sat = transform(img_sat)
+        sat_dir = self._pick_sat_dir()
+        # sequential 帧用同一个 jitter_fn：保证时序颜色变化一致，时序 loss 不受干扰
+        jitter_fn = (self.color_jitter
+                     if self.is_train and random.random() < self.color_jitter_prob
+                     else None)
 
-        img_sat = mmlabNormalize(img_sat)
-        if results.get('flip_dx', False):
+        # token 目录路径（不含 sat.png，保持与原始逻辑一致的构建方式）
+        sat_path_dir = results['sat_path'].rstrip('/').replace('/sat/', f'/{sat_dir}/')
+        if self.sat_cache_dir is not None:
+            # 表9 离线特征缓存模式：跳过读图/归一化/扰动，直接加载预提取的 d0 特征
+            token = os.path.basename(sat_path_dir)   # 末级即 sample token
+            arr = np.load(os.path.join(self.sat_cache_dir, f'{token}.npz'))['d0']
+            # Preserve float16 caches on CPU so host-to-device transfer is
+            # actually halved. The detector casts to its compute dtype after
+            # the tensor reaches the GPU. Float32 caches remain unchanged.
+            img_sat = torch.from_numpy(arr)   # (128, 200, 200)
+        else:
+            img_sat = self._load_sat(sat_path_dir, jitter_fn)
             img_sat = torch.flip(img_sat, [1])
+            if results.get('flip_dx', False):
+                img_sat = torch.flip(img_sat, [2])
+            if results.get('flip_dy', False):
+                img_sat = torch.flip(img_sat, [1])
 
-        if results.get('flip_dy', False):
-            img_sat = torch.flip(img_sat, [2])
-        # print(results['img_inputs'][0].shape, "1111111111111111111", img_sat.shape)
-        # print(img_sat.shape)
-        img_sat = img_sat.permute(0, 2, 1)
-        # img_sat = torch.flip(img_sat, [1])
-        imgs.append(img_sat)
+        imgs = [img_sat]
 
         if self.sequential:
             assert 'adjacent' in results
             for adj_info in results['adjacent']:
-                filename_adj = adj_info['sat_path'] + '/sat.png'
-                img_adjacent = Image.open(filename_adj)
-                # 对选择的邻近帧图像也进行增广, 增广参数与当前帧图像相同.
-                img_adjacent = img_adjacent.rotate(-90, expand=False)
-                img_adjacent = mmlabNormalize(img_adjacent)
+                adj_dir = adj_info['sat_path'].rstrip('/').replace('/sat/', f'/{sat_dir}/')
+                img_adj = self._load_sat(adj_dir, jitter_fn)
+                img_adj = torch.flip(img_adj, [1])
                 if results.get('flip_dx', False):
-                    img_adjacent = torch.flip(img_adjacent, [1])
+                    img_adj = torch.flip(img_adj, [2])
                 if results.get('flip_dy', False):
-                    img_adjacent = torch.flip(img_adjacent, [2])
-                img_adjacent = img_adjacent.permute(0, 2, 1)
-                
-                imgs.append(img_adjacent)
-                # print(1)
-            imgs = torch.stack(imgs)
-        # print("len: ", len(imgs))
+                    img_adj = torch.flip(img_adj, [1])
+                imgs.append(img_adj)
+            # 修复：stack后shape为 (N_frames, C, H, W)
+            # DataLoader会自动加batch维度变成 (B, N_frames, C, H, W)
+            imgs = torch.stack(imgs)  # (N_frames, C, H, W)
             results['img_inputs'] = tuple(list(results['img_inputs']) + [imgs])
         else:
+            # 单帧模式：(C, H, W)，DataLoader加batch后变成 (B, C, H, W)
             results['img_inputs'] = tuple(list(results['img_inputs']) + imgs)
-        return results
 
+        return results

@@ -3,14 +3,11 @@ from __future__ import division
 import argparse
 import copy
 import os
-os.environ['CUDA_VISIBLE_DEVICES']='0,1,2,3,4,5,6,7'
-# os.environ['CUDA_VISIBLE_DEVICES']='3'
 
 import time
 import warnings
 from os import path as osp
 import sys
-sys.path.insert(0, '/export/cc/SA-OCC')
 
 import mmcv
 import torch
@@ -37,9 +34,8 @@ except ImportError:
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
-    parser.add_argument('--config', default= '/export/cc/SA-OCC/projects/configs/sa_occ/sa-occ-stbase-ur50-4d-640x1600_4x4_2e-4.py',help='train config file path')
-    parser.add_argument('--work-dir', default= '/export/cc/SA-OCC/work_dirs/sa-occ-v4', help='the dir to save logs and models') # , default= '/workspace/FlashOCC/test'
-    # parser.add_argument('--work-dir', default= '/workspace/FlashOCC/work_dirs/dualocc-r50-nomask-1', help='the dir to save logs and models')
+    parser.add_argument('--config', default='projects/configs/sa_occ/sa-occ-r50-aux.py', help='train config file path')
+    parser.add_argument('--work-dir', default='work_dirs/saocc-plus', help='directory for logs and checkpoints')
     
     parser.add_argument(
         '--resume-from', help='the checkpoint file to resume from')

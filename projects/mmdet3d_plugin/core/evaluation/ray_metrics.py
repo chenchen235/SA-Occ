@@ -24,7 +24,7 @@ occ_class_names = [
 # https://github.com/tarashakhurana/4d-occ-forecasting/blob/ff986082cd6ea10e67ab7839bf0e654736b3f4e2/test_fgbg.py#L29C1-L46C16
 def get_rendered_pcds(origin, points, tindex, pred_dist):
     pcds = []
-    
+
     for t in range(len(origin)):
         mask = (tindex == t)
         # skip the ones with no data
@@ -36,13 +36,13 @@ def get_rendered_pcds(origin, points, tindex, pred_dist):
         d = v / np.sqrt((v ** 2).sum(axis=1, keepdims=True))
         pred_pts = origin[t][None, :] + d * pred_dist[mask][:, None]
         pcds.append(torch.from_numpy(pred_pts))
-        
+
     return pcds
 
 
 def meshgrid3d(occ_size, pc_range):
     W, H, D = occ_size
-    
+
     xs = torch.linspace(0.5, W - 0.5, W).view(W, 1, 1).expand(W, H, D) / W
     ys = torch.linspace(0.5, H - 0.5, H).view(1, H, 1).expand(W, H, D) / H
     zs = torch.linspace(0.5, D - 0.5, D).view(1, 1, D).expand(W, H, D) / D
@@ -60,7 +60,7 @@ def generate_lidar_rays():
     for k in range(10):
         angle = math.pi / 2 - math.atan(k + 1)
         pitch_angles.append(-angle)
-    
+
     # nuscenes lidar fov: [0.2107773983152201, -0.5439104895672159] (rad)
     while pitch_angles[-1] < 0.21:
         delta = pitch_angles[-1] - pitch_angles[-2]
@@ -86,7 +86,7 @@ def process_one_sample(sem_pred, lidar_rays, output_origin, instance_pred=None):
     T = output_origin.shape[1]
     pred_pcds_t = []
 
-    free_id = len(occ_class_names) - 1 
+    free_id = len(occ_class_names) - 1
     occ_pred = copy.deepcopy(sem_pred)
     occ_pred[sem_pred < free_id] = 1
     occ_pred[sem_pred == free_id] = 0
@@ -97,8 +97,8 @@ def process_one_sample(sem_pred, lidar_rays, output_origin, instance_pred=None):
     scaler = torch.Tensor([_voxel_size] * 3)[None, None, :]
 
     lidar_tindex = torch.zeros([1, lidar_rays.shape[0]])
-    
-    for t in range(T): 
+
+    for t in range(T):
         lidar_origin = output_origin[:, t:t+1, :]  # [1, 1, 3]
         lidar_endpts = lidar_rays[None] + lidar_origin  # [1, 15840, 3]
 
@@ -127,7 +127,7 @@ def process_one_sample(sem_pred, lidar_rays, output_origin, instance_pred=None):
 
         pred_label = sem_pred[coord_index[:, 0], coord_index[:, 1], coord_index[:, 2]][:, None]  # [N, 1]
         pred_dist = pred_dist[0, :, None].cpu()
-        
+
         if instance_pred is not None:
             pred_instance = instance_pred[coord_index[:, 0], coord_index[:, 1], coord_index[:, 2]][:, None]  # [N, 1]
             pred_pcds = torch.cat([pred_label.float(), pred_instance.float(), pred_dist], dim=-1)
@@ -137,7 +137,7 @@ def process_one_sample(sem_pred, lidar_rays, output_origin, instance_pred=None):
         pred_pcds_t.append(pred_pcds)
 
     pred_pcds_t = torch.cat(pred_pcds_t, dim=0)
-   
+
     return pred_pcds_t.numpy()
 
 
@@ -155,7 +155,7 @@ def calc_metrics(pcd_pred_list, pcd_gt_list):
             depth_gt = pcd_gt[:, 1]
             l1_error = np.abs(depth_pred - depth_gt)
             tp_dist_mask = (l1_error < threshold)
-            
+
             for i, cls in enumerate(occ_class_names):
                 cls_id = occ_class_names.index(cls)
                 cls_mask_pred = (pcd_pred[:, 0] == cls_id)
@@ -170,7 +170,7 @@ def calc_metrics(pcd_pred_list, pcd_gt_list):
                 tp_cls = cls_mask_gt & cls_mask_pred  # [N]
                 tp_mask = np.logical_and(tp_cls, tp_dist_mask)
                 tp_cnt[j][i] += tp_mask.sum()
-    
+
     iou_list = []
     for j, threshold in enumerate(thresholds):
         iou_list.append((tp_cnt[j] / (gt_cnt + pred_cnt - tp_cnt[j]))[:-1])
@@ -207,7 +207,7 @@ def main_raypq(sem_pred_list, sem_gt_list, inst_pred_list, inst_gt_list, lidar_o
         pcd_gt = pcd_gt[valid_mask]
 
         assert pcd_pred.shape == pcd_gt.shape
-        
+
         sem_gt = pcd_gt[:, 0].astype(np.int32)
         sem_pred = pcd_pred[:, 0].astype(np.int32)
 
@@ -255,7 +255,7 @@ def main(sem_pred_list, sem_gt_list, lidar_origin_list):
     rayiou_0 = np.nanmean(iou_list[0])
     rayiou_1 = np.nanmean(iou_list[1])
     rayiou_2 = np.nanmean(iou_list[2])
-    
+
     table = PrettyTable([
         'Class Names',
         'RayIoU@1', 'RayIoU@2', 'RayIoU@4'
@@ -267,7 +267,7 @@ def main(sem_pred_list, sem_gt_list, lidar_origin_list):
             occ_class_names[i],
             iou_list[0][i], iou_list[1][i], iou_list[2][i]
         ], divider=(i == len(occ_class_names) - 2))
-    
+
     table.add_row(['MEAN', rayiou_0, rayiou_1, rayiou_2])
 
     print(table)

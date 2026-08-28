@@ -9,7 +9,7 @@ from nuscenes.nuscenes import NuScenes
 from pyquaternion import Quaternion
 import cv2
 from PIL import Image
-sat_orin_path = "/export/cc/SA-OCC/data/sat/"
+sat_orin_path = os.environ.get('SAOCC_SAT_ORIGIN', 'data/sat')
 
 
 
@@ -22,7 +22,7 @@ REFERENCE_COORDINATES = {
 }
 
 gps_ranges = {
-    "boston-seapot": {
+    "boston-seaport": {
         "min": (-71.05851008588972, 42.33797303172644),
         "max": (-71.02355110151471, 42.35621253138901)
     },
@@ -40,20 +40,38 @@ gps_ranges = {
     }
 }
 
-sat_out_path = "/export/cc/SA-OCC/data/nuscenes/sat/"
+from pyproj import CRS, Transformer
+
+# 创建一个以 WGS84 为基准的投影
+wgs84 = CRS("EPSG:4326")
+
+# 为每个城市创建一个以参考点为中心的方位等距投影
+city_projections = {}
+for city, ref_coords in REFERENCE_COORDINATES.items():
+    city_projections[city] = CRS.from_proj4(f"+proj=aeqd +lat_0={ref_coords[0]} +lon_0={ref_coords[1]} +datum=WGS84")
+
+# 更新 gps_ranges 为米单位
+for city, gps_range in gps_ranges.items():
+    transformer = Transformer.from_crs(wgs84, city_projections[city], always_xy=True)
+    min_x, min_y = transformer.transform(gps_range["min"][0], gps_range["min"][1])
+    max_x, max_y = transformer.transform(gps_range["max"][0], gps_range["max"][1])
+    gps_ranges[city]["min"] = (min_x, min_y)
+    gps_ranges[city]["max"] = (max_x, max_y)
+
+sat_out_path = os.environ.get('SAOCC_SAT_OUTPUT', 'data/nuscenes/sat')
 
 # 遍历字典中的键
 for key in gps_ranges.keys():
     # 构造图像文件名
     image_filename = sat_orin_path + f"{key}.png"
-    
+
     # 尝试打开图像文件
     try:
         with Image.open(image_filename) as img:
             # 获取图像的高度和宽度
             height = img.height
             width = img.width
-            
+
             # 将宽度和高度信息添加到字典中
             gps_ranges[key]["W"] = width
             gps_ranges[key]["H"] = height
@@ -71,19 +89,28 @@ for key, value in gps_ranges.items():
     print(f"{key}: {value}")
 
 # 判断位置属于哪个GPS范围，并返回键
-def find_key_for_location(gps_ranges, location):
+def find_key_for_location(gps_ranges, location, city_projections):
     lon, lat = location
     for key, range_info in gps_ranges.items():
-        if (range_info["min"][0] <= lon and lon <= range_info["max"][0] and
-                range_info["min"][1] <= lat and lat <= range_info["max"][1]):
-            x = (lon - range_info["min"][0]) / (range_info["max"][0] - range_info["min"][0]) * range_info["W"]
-            y = (1 - (lat - range_info["min"][1]) / (range_info["max"][1] - range_info["min"][1])) * range_info["H"]
-            center_point  = (x,y)
+        # 检查是否有有效的宽度和高度
+        if range_info.get("W", 0) == 0 or range_info.get("H", 0) == 0:
+            print(f"Warning: Missing W/H for {key}. Skipping.")
+            continue
 
+        # 将经纬度转换为米单位
+        transformer = Transformer.from_crs("EPSG:4326", city_projections[key], always_xy=True)
+        x, y = transformer.transform(lon, lat)
+
+        if (range_info["min"][0] <= x <= range_info["max"][0] and
+                range_info["min"][1] <= y <= range_info["max"][1]):
+            # 计算像素坐标
+            pixel_x = ((x - range_info["min"][0]) / (range_info["max"][0] - range_info["min"][0]) * range_info["W"])
+            pixel_y = ((1 - (y - range_info["min"][1]) / (range_info["max"][1] - range_info["min"][1])) * range_info["H"])
+            center_point = (pixel_x, pixel_y)
             return key, center_point
 
-    print("ERROR", location)
-    return None
+    print("ERROR: Location out of bounds:", location)
+    return None, None
 
 def get_poses(nusc: NuScenes, scene_token: str) -> List[dict]:
     """
@@ -97,7 +124,7 @@ def get_poses(nusc: NuScenes, scene_token: str) -> List[dict]:
     sample_rec = nusc.get('sample', scene_rec['first_sample_token'])
     sd_rec = nusc.get('sample_data', sample_rec['data']['LIDAR_TOP'])
 
-    
+
     ego_pose = nusc.get('ego_pose', sd_rec['token'])
     pose_list.append(ego_pose)
 
@@ -125,9 +152,9 @@ def get_coordinate(ref_lat: float, ref_lon: float, bearing: float, dist: float) 
     """
     lat, lon = math.radians(ref_lat), math.radians(ref_lon)
     angular_distance = dist / EARTH_RADIUS_METERS
-    
+
     target_lat = math.asin(
-        math.sin(lat) * math.cos(angular_distance) + 
+        math.sin(lat) * math.cos(angular_distance) +
         math.cos(lat) * math.sin(angular_distance) * math.cos(bearing)
     )
     target_lon = lon + math.atan2(
@@ -137,10 +164,63 @@ def get_coordinate(ref_lat: float, ref_lon: float, bearing: float, dist: float) 
     return math.degrees(target_lat), math.degrees(target_lon)
 
 
+def get_rectangle_corners(center, size, rotation, latitude):
+    """Calculate the corners of a rectangle given its center, size, and rotation.
+
+    Args:
+        center: (x, y) in pixel coordinates
+        size: (width, height) in pixels
+        rotation: quaternion [w, x, y, z]
+
+    Returns:
+        corners: 4x2 array, ordered as [top-left, top-right, bottom-right, bottom-left]
+    """
+    W, H = size
+
+    latitude_factor = 1 / np.cos(np.radians(latitude))
+    W = W * latitude_factor
+    H = H * latitude_factor
+
+    print(f"Latitude: {latitude}, Latitude factor: {latitude_factor}, Adjusted width: {W}")
+
+    # 从四元数获取 yaw 角（绕 z 轴旋转，单位：弧度）
+    q = Quaternion(rotation)
+    yaw = q.yaw_pitch_roll[0]
+
+    # ========== 重要：考虑图像坐标系 y 轴向下 ==========
+    # 在图像坐标系中，逆时针旋转需要取负号
+    yaw = -yaw
+
+    # 构建 2D 旋转矩阵
+    cos_yaw = np.cos(yaw)
+    sin_yaw = np.sin(yaw)
+    rotation_matrix = np.array([
+        [cos_yaw, -sin_yaw],
+        [sin_yaw,  cos_yaw]
+    ])
+
+    # 定义矩形的四个角（相对于中心，未旋转时）
+    # 顺序：左上、右上、右下、左下
+    half_w = W / 2
+    half_h = H / 2
+    corners_local = np.array([
+        [-half_w, -half_h],  # 左上
+        [ half_w, -half_h],  # 右上
+        [ half_w,  half_h],  # 右下
+        [-half_w,  half_h]   # 左下
+    ])
+
+    # 旋转并平移
+    center_array = np.array([center[0], center[1]])
+    corners = np.dot(corners_local, rotation_matrix.T) + center_array
+
+    return corners
+
+
 def derive_latlon(location: str, poses: List[Dict[str, float]]) -> List[Dict[str, float]]:
     """
     For each pose value, extract its respective lat/lon coordinate and timestamp.
-    
+
     This makes the following two assumptions in order to work:
         1. The reference coordinate for each map is in the south-western corner.
         2. The origin of the global poses is also in the south-western corner (and identical to 1).
@@ -151,74 +231,59 @@ def derive_latlon(location: str, poses: List[Dict[str, float]]) -> List[Dict[str
     """
     assert location in REFERENCE_COORDINATES.keys(), \
         f'Error: The given location: {location}, has no available reference.'
-    
+
     coordinates = []
     reference_lat, reference_lon = REFERENCE_COORDINATES[location]
+
     for p in poses:
-        # print(p)
         ts = p['timestamp']
         x, y = p['translation'][:2]
-        bearing = math.atan(x / y)
+
+        # ========== 修正：使用 atan2 正确计算方位角 ==========
+        bearing = math.atan2(x, y)  # 从北向顺时针的角度
         distance = math.sqrt(x**2 + y**2)
+
         lat, lon = get_coordinate(reference_lat, reference_lon, bearing, distance)
 
-        coordinates.append({'timestamp': ts, 'latitude': lat, 'longitude': lon, 'rot': p['rotation'], 'token': p['token']})
+        coordinates.append({
+            'timestamp': ts,
+            'latitude': lat,
+            'longitude': lon,
+            'rot': p['rotation'],
+            'token': p['token']
+        })
+
     return coordinates
 
-import math
-def get_rectangle_corners(center, size, rotation):
-    """Calculate the corners of a rectangle given its center, size, and rotation."""
-    W, H = size
-    rotation_matrix = Quaternion(rotation).rotation_matrix[:2, :2].T
-    # yaw, pitch, roll = Quaternion(rotation).yaw_pitch_roll
-    # print(rotation, yaw/math.pi*180)
-    
-    # Define the half-size vectors
-    half_x = np.array([W / 2, 0])
-    half_y = np.array([0, H / 2])
-    center = np.array([center[0], center[1]])
-    # Rotate the half-size vectors
-    rotated_half_x = np.dot(rotation_matrix, half_x)
-    rotated_half_y = np.dot(rotation_matrix, half_y)
-    
-    # Calculate the corners
-    corners = np.array([
-        center - rotated_half_x - rotated_half_y,
-        center + rotated_half_x - rotated_half_y,
-        center + rotated_half_x + rotated_half_y,
-        center - rotated_half_x + rotated_half_y
-    ])
-    # corners = np.array([
-        # center - half_x - half_y,
-    #     center + half_x - half_y,
-    #     center + half_x + half_y,
-    #     center - half_x + half_y
-    # ])
-    # corners = corners[:, :2]
-    return corners
 
 def crop_quadrilateral(img, corners):
-
-    # corners = sort_points_clockwise_to_corners(corners)
     width = 400
     height = 400
+
     dst = np.array([
         [0, 0],
         [width - 1, 0],
         [width - 1, height - 1],
         [0, height - 1]
     ], dtype=np.float32)
-    corners = corners.astype(dst.dtype)
-    # print(corners.shape)  # 应该输出 (4, 2)
-    # print(corners.dtype)  # 应该输出 float32
-    # print(dst.shape)  # 应该输出 (4, 2)
-    # print(dst.dtype)  # 应该输出 float32
-    # 计算透视变换矩阵
+
+    h, w = img.shape[:2]
+    corners = corners.astype(np.float32)
+
+    # 移除 np.clip，clip会破坏四边形几何形状导致透视变换错乱
+    # warpPerspective 的 BORDER_CONSTANT 会自动对越界区域填0
+    if not np.all((corners[:, 0] >= 0) & (corners[:, 0] < w) &
+                  (corners[:, 1] >= 0) & (corners[:, 1] < h)):
+        print(f"Warning: corners partially out of bounds, padding with zeros: {corners}")
+
     M = cv2.getPerspectiveTransform(corners, dst)
-    
-    # 执行透视变换
-    warped = cv2.warpPerspective(img, M, (width, height))
-    
+    warped = cv2.warpPerspective(
+        img, M, (width, height),
+        flags=cv2.INTER_LANCZOS4,
+        borderMode=cv2.BORDER_CONSTANT,
+        borderValue=(0, 0, 0)
+    )
+
     return warped
 
 
@@ -241,7 +306,7 @@ def main(dataroot: str, version: str, output_prefix: str, output_format: str = '
     for key in gps_ranges.keys():
         print(key)
         imgs[key] = cv2.imread(sat_orin_path + key + ".png")
-            
+
 
     print(f'Extracting coordinates...')
     for scene in tqdm(nusc.scene):
@@ -268,9 +333,13 @@ def main(dataroot: str, version: str, output_prefix: str, output_format: str = '
             sample = nusc.get('sample', sample_token)
 
             # print(token, sample['token'])
-            key, center_point = find_key_for_location(range, loc)
+            key, center_point = find_key_for_location(range, loc, city_projections)
 
-            corners = get_rectangle_corners(center_point, size, rot)
+            if key is None:
+                count += 1
+                continue  # 完全不在任何城市大图范围内，跳过
+
+            corners = get_rectangle_corners(center_point, size, rot, dict["latitude"])
             cropped_image = crop_quadrilateral(imgs[key], corners)
 
             out_path = sat_out_path + scene['name'] +'/' + sample['token']
@@ -278,7 +347,7 @@ def main(dataroot: str, version: str, output_prefix: str, output_format: str = '
 
             if not os.path.exists(out_path):
                 os.makedirs(out_path)
-                      
+
             # Save or display the cropped image
             cropped_image2 = Image.fromarray(cropped_image)
             cropped_image2.save(out_path + '/sat.png')
@@ -287,7 +356,7 @@ def main(dataroot: str, version: str, output_prefix: str, output_format: str = '
             # print(key, center_point)
             if key is None:
                 count = count + 1
-            
+
 
     print(count, count0, count/count0)
 
@@ -298,7 +367,7 @@ if __name__ == "__main__":
     # get_map_max_lon_lat(gps_ranges)
     parser = argparse.ArgumentParser(description='Export ego pose coordinates from a scene to a .json file.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--dataroot', type=str, default='/export/cc/SA-OCC/data/nuscenes', help="Path where nuScenes is saved.")
+    parser.add_argument('--dataroot', type=str, default='data/nuscenes', help="Path where nuScenes is saved.")
     parser.add_argument('--version', type=str, default='v1.0-trainval', help='Dataset version.')
     parser.add_argument('--output_prefix', type=str, default='latlon',
                         help='Output file path without file extension.')
@@ -306,4 +375,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(args.dataroot, args.version, args.output_prefix, args.output_format, gps_ranges)
-
